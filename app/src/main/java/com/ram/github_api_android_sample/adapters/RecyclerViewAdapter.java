@@ -17,6 +17,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.ram.github_api_android_sample.R;
+import com.ram.github_api_android_sample.events.RepoClickEvent;
 import com.ram.github_api_android_sample.models.Repo;
 import java.util.List;
 
@@ -72,7 +73,8 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(mContext,"position=="+position, Toast.LENGTH_SHORT).show();
+                RepoClickEvent eventBus = new RepoClickEvent(position);
+                EventBus.getDefault().post(eventBus);
             }
         });
     }

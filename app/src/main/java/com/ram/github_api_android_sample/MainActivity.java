@@ -1,5 +1,6 @@
 package com.ram.github_api_android_sample;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -23,11 +24,13 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
 import com.ram.github_api_android_sample.adapters.RecyclerViewAdapter;
+import com.ram.github_api_android_sample.events.RepoClickEvent;
 import com.ram.github_api_android_sample.models.Repo;
 import com.ram.github_api_android_sample.utils.ConnectionManager;
 
 import java.util.concurrent.TimeUnit;
 
+import de.greenrobot.event.EventBus;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -83,11 +86,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if(!EventBus.getDefault().isRegistered(MainActivity.this)){
+            EventBus.getDefault().register(MainActivity.this);
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if(EventBus.getDefault().isRegistered(MainActivity.this)){
+            EventBus.getDefault().unregister(MainActivity.this);
+        }
     }
 
     private class RepoListTask extends AsyncTask<String, String, String> {
@@ -171,6 +180,16 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         return response.body().string();
+    }
+
+    public void onEventMainThread(RepoClickEvent event) {
+        Intent repoDetails = new Intent(MainActivity.this, RepoDetailsActivity.class);
+        repoDetails.putExtra("AVATAR_IMG",list.get(event.getPosition()).getAvatar_img());
+        repoDetails.putExtra("NAME",list.get(event.getPosition()).getName());
+        repoDetails.putExtra("PROJECT_LINK",list.get(event.getPosition()).getProjectLink());
+        repoDetails.putExtra("DESCRIPTION",list.get(event.getPosition()).getDescription());
+        repoDetails.putExtra("CONTRIBUTORS_URL",list.get(event.getPosition()).getContributorsUrl());
+        startActivity(repoDetails);
     }
 
 }
