@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Github-Api-Android-sample</string>
+    <string name="search_hint">Search Here</string>
+
+</resources>
