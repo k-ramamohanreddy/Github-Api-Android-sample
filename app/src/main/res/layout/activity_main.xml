@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context="com.ram.github_api_android_sample.MainActivity"
+    tools:context="com.ram.github_api_android_sample.activity.MainActivity"
     android:orientation="vertical">
 
     <LinearLayout

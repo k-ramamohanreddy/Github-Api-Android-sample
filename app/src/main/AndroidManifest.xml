@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".activity.MainActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,7 +22,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".RepoDetailsActivity"
+            android:name=".activity.RepoDetailsActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".activity.ContributorsDetails"
             android:theme="@style/AppTheme.NoActionBar" />
     </application>
 

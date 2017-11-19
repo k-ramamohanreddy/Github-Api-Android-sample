@@ -1,4 +1,4 @@
-package com.ram.github_api_android_sample;
+package com.ram.github_api_android_sample.activity;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -13,6 +13,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -20,28 +21,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.ram.github_api_android_sample.R;
 import com.ram.github_api_android_sample.adapters.ContributorsAdapter;
 import com.ram.github_api_android_sample.events.ContributorClickEvent;
 import com.ram.github_api_android_sample.models.Contributors;
+import com.ram.github_api_android_sample.utils.ApiService;
 import com.ram.github_api_android_sample.utils.ConnectionManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import de.greenrobot.event.EventBus;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class RepoDetailsActivity extends AppCompatActivity {
-
+    static final String TAG = RepoDetailsActivity.class.getSimpleName();
     ImageView avatarimg_iv;
     TextView name_tv, projectLink_tv, description_tv;
     String name, project_Link, description, avatar_img, contributors_url;
@@ -51,6 +48,7 @@ public class RepoDetailsActivity extends AppCompatActivity {
     List<Contributors> list;
     ConnectionManager connectionManager;
     ProgressBar pb;
+    ApiService apiService;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,6 +67,7 @@ public class RepoDetailsActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
 
+        apiService = new ApiService();
         list = new ArrayList<>();
         connectionManager = new ConnectionManager(RepoDetailsActivity.this);
         Intent data = getIntent();
@@ -105,9 +104,11 @@ public class RepoDetailsActivity extends AppCompatActivity {
         if(connectionManager.isNetworkAvailable()){
             contributorsListTask = new ContributorsListTask();
             if(contributors_url.length() > 0 && contributors_url != null){
+                Log.d(TAG,"contributors_url == "+contributors_url );
                 contributorsListTask.execute();
             }
         }else {
+            Log.d(TAG,"Check your network connection == "+contributors_url );
             Toast.makeText(RepoDetailsActivity.this,"Check your NetWork Connection",Toast.LENGTH_SHORT).show();
         }
     }
@@ -130,12 +131,30 @@ public class RepoDetailsActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... f_url) {
             try {
-                if(contributors_url.length() > 0 && contributors_url != null){
-                    post(contributors_url);
+                if(contributors_url.length() > 0 && contributors_url != null) {
+                    responseStr = apiService.post(contributors_url);
+                    list.clear();
+                    list = new ArrayList<>();
+                    JSONArray jsonArray = new JSONArray(responseStr);
+                    if (jsonArray.length() > 0) {
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject itemObj = jsonArray.getJSONObject(i);
+                            String name = itemObj.getString("login");
+                            String user_repos = itemObj.getString("repos_url");
+                            String avatarImg = itemObj.getString("avatar_url");
+                            Contributors contributors = new Contributors();
+                            contributors.setName(name);
+                            contributors.setRepos_link(user_repos);
+                            contributors.setProfile_pic(avatarImg);
+                            list.add(contributors);
+                        }
+                    }
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+                } catch (JSONException jse) {
+                    jse.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             return null;
         }
 
@@ -149,48 +168,12 @@ public class RepoDetailsActivity extends AppCompatActivity {
         }
     }
 
-    public  String post(String UrlBase) throws IOException {
-
-        OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
-        httpClient.connectTimeout(60, TimeUnit.SECONDS);
-        httpClient.readTimeout(60, TimeUnit.SECONDS);
-        httpClient.writeTimeout(60, TimeUnit.SECONDS);
-        MediaType media = MediaType.parse("application/json; charset=utf-8");
-        Request request = new Request.Builder()
-                .url(UrlBase)
-                .get()
-                .addHeader("content-Type", "application/json")
-                .build();
-
-        OkHttpClient client = httpClient.build();
-        Response response = client.newCall(request).execute();
-        String responseString = response.body().string();
-        list.clear();
-        list = new ArrayList<>();
-        try {
-            JSONArray jsonArray = new JSONArray(responseString);
-            if(jsonArray.length() > 0){
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    JSONObject itemObj = jsonArray.getJSONObject(i);
-                    String name = itemObj.getString("login");
-                    String user_repos = itemObj.getString("repos_url");
-                    String avatarImg = itemObj.getString("avatar_url");
-                    Contributors contributors = new Contributors();
-                    contributors.setName(name);
-                    contributors.setRepos_link(user_repos);
-                    contributors.setProfile_pic(avatarImg);
-                    list.add(contributors);
-                }
-            }
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return response.body().string();
-    }
-
     public void onEventMainThread(ContributorClickEvent event) {
-
+        Log.d(TAG,"ContributorClickEvent == ");
+        Intent repoDetails = new Intent(RepoDetailsActivity.this,ContributorsDetails.class);
+        repoDetails.putExtra("AVATAR_IMG",list.get(event.getPosition()).getProfile_pic());
+        repoDetails.putExtra("REPO_LIST",list.get(event.getPosition()).getRepos_link());
+        startActivity(repoDetails);
     }
 
     @Override
